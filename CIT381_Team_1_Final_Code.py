@@ -302,71 +302,96 @@ def button_Press(button,number):
     #return the number
     return pinVal
 
+#Function used to clear PIN input and start over
+def resetVar():
+    global tInput
+    global iPIN
+    global output_string
+    #reset all variables to try again
+    tInput = 0  #times input
+    iPIN.clear() #Clear the PIN input
+    output_string = ""  #the output string to the LCD
+
 #When motion is detected, call the doMotion function to record, take picture, and send Email message
 pir.when_motion = doMotion
 #When motion is no longer detected, freeze the camera feed
 pir.when_no_motion = noMotion
 
 #Main Code Loop
-while True:
-    #scan for when each button is pressed
-    if button1.value == 1:              #Button 1
-        x = button_Press(button1, 0)    #call the button_Press function to save input number to a variable
-        output_string += str(x) + " "   #append the number to output string
-        displayLCD(output_string,1)       #display output string onto the LCD
-    #Button 2
-    if button2.value == 1:              
-        x = button_Press(button2, 1)    #Ditto 
-        output_string += str(x) + " " 
-        displayLCD(output_string,1)
-    #Button 3
-    if button3.value == 1:              
-        x = button_Press(button3, 2)
-        output_string += str(x) + " " 
-        displayLCD(output_string,1)    
-    #Button 4
-    if button4.value == 1:              
-        x = button_Press(button4, 3)
-        output_string += str(x) + " " 
-        displayLCD(output_string,1)    
-    #Button 5
-    if button5.value == 1:              
-        x = button_Press(button5, 4)
-        output_string += str(x) + " " 
-        displayLCD(output_string,1)
+try:
+    while True:
+        #if last two buttons are pressed together, reset PIN entry
+        if button1.value == 1 & button2.value == 1:
+            resetVar()
+            displayLCD("           ", 1)    #Clear the Top display
 
-    #if the number of inputs equals the set PIN length
-    if tInput == lenPIN:
-        #sleep for 1 sec. to display the last input number onto the LCD
-        time.sleep(1)
-        #check if input PIN is equal to set PIN
-        if iPIN == cPIN: #equal
-                #Input PIN is valid
-                displayLCD("PIN Valid",1)
-                time.sleep(1)
-
-                #light the Green LED
-                green_led.on()
-            
-                #Unlock the door
-                if doDoorCycle == True:
-                    doDoorCycle = False
-                    threading.Thread(target=doorCycle).start()
         else:
-            #invalid
-            displayLCD("PIN Invalid",1)
-            #light the RED LED
-            red_led.on()
-        #sleep for 1 sec. to display feedback
-        time.sleep(1)
+            #scan for when each button is pressed
+            if button1.value == 1:              #Button 1
+                x = button_Press(button1, 0)    #call the button_Press function to save input number to a variable
+                output_string += str(x) + " "   #append the number to output string
+                displayLCD(output_string,1)       #display output string onto the LCD
+            #Button 2
+            if button2.value == 1:              
+                x = button_Press(button2, 1)    #Ditto 
+                output_string += str(x) + " " 
+                displayLCD(output_string,1)
+            #Button 3
+            if button3.value == 1:              
+                x = button_Press(button3, 2)
+                output_string += str(x) + " " 
+                displayLCD(output_string,1)    
+            #Button 4
+            if button4.value == 1:              
+                x = button_Press(button4, 3)
+                output_string += str(x) + " " 
+                displayLCD(output_string,1)    
+            #Button 5
+            if button5.value == 1:              
+                x = button_Press(button5, 4)
+                output_string += str(x) + " " 
+                displayLCD(output_string,1)
 
-        #reset all variables to try again
-        tInput = 0  #times input
-        iPIN.clear() #Clear the PIN input
-        output_string = ""  #the output string to the LCD
-        #if the door cycle is currently not occuring (maintain the "Door Cycle" phrase on the LCD)
-        if doDoorCycle == True:
-            displayLCD("           ", 1)   #clear the top portion from theLCD
-    
-    #sleep code for 1/4 second
-    time.sleep(0.25)
+
+        #if the number of inputs equals the set PIN length
+        if tInput == lenPIN:
+            #sleep for 1 sec. to display the last input number onto the LCD
+            time.sleep(1)
+            #check if input PIN is equal to set PIN
+            if iPIN == cPIN: #equal
+                    #Input PIN is valid
+                    displayLCD("PIN Valid",1)
+                    time.sleep(1)
+
+                    #light the Green LED
+                    green_led.on()
+                
+                    #Unlock the door
+                    if doDoorCycle == True:
+                        doDoorCycle = False
+                        threading.Thread(target=doorCycle).start()
+            else:
+                #invalid
+                displayLCD("PIN Invalid",1)
+                #light the RED LED
+                red_led.on()
+            #sleep for 1 sec. to display feedback
+            time.sleep(1)
+
+            #Call function used to reset PIN variables
+            resetVar()
+            
+            #if the door cycle is currently not occuring (maintain the "Door Cycle" phrase on the LCD)
+            if doDoorCycle == True:
+                displayLCD("           ", 1)   #clear the top portion from theLCD
+        
+        #sleep code for 1/4 second
+        time.sleep(0.25)
+except Exception as error:
+    print("Code Exited with Error: " + error)
+
+finally:
+    lcDisplay.lcd_clear()
+    green_led.off
+    yellow_led.off
+    red_led.off
